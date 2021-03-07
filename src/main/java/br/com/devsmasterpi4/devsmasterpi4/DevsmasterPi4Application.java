@@ -6,8 +6,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class DevsmasterPi4Application {
 
-	public static void main(String[] args) {
-		SpringApplication.run(DevsmasterPi4Application.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(DevsmasterPi4Application.class, args);
+      
+    }
 
 }
