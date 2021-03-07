@@ -34,6 +34,7 @@ public class Produto implements Serializable {
     private boolean status;
     private int quantidade;
     private double preco;
+    
 
     public Produto() {
     }

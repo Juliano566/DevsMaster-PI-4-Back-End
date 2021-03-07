@@ -39,6 +39,12 @@ public class CategoriaResource {
 		return categoriaRepository.findAll();
 	}
 	
+	@GetMapping(path="/nome/{parteNome}")
+	public Iterable<Categoria>obterCategoriaPorNome(@PathVariable String parteNome){
+		return categoriaRepository.findByNomeContaining(parteNome);
+	}
+	
+	
 	@GetMapping(path="/pagina/{numeroPagina}/{qtdePagina}")
 	public Iterable<Categoria> obterCategoriasPaginada(
 			@PathVariable int numeroPagina, @PathVariable int qtdePagina) {
@@ -64,5 +70,7 @@ public class CategoriaResource {
 	public void excluirCategoria(@PathVariable int id) {
 		 categoriaRepository.deleteById(id);
 	}
+	
+	
 	
 }
