@@ -47,7 +47,7 @@ public class Produto implements Serializable {
 
     public Produto(String nome, String descricao, int estrelas, boolean status, int quantidade, double preco,
 			String foto1, String foto2, String foto3, String foto4) {
-		super();
+		
 		this.nome = nome;
 		this.descricao = descricao;
 		this.estrelas = estrelas;
