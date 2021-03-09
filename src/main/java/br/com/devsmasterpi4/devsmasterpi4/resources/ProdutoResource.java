@@ -5,113 +5,89 @@
  */
 package br.com.devsmasterpi4.devsmasterpi4.resources;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Optional;
-
-
+import br.com.devsmasterpi4.devsmasterpi4.dominio.Produto;
+import br.com.devsmasterpi4.devsmasterpi4.repositories.ProdutoRepository;
+import br.com.devsmasterpi4.devsmasterpi4.services.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-
-import br.com.devsmasterpi4.devsmasterpi4.dominio.Produto;
-
-import br.com.devsmasterpi4.devsmasterpi4.repositories.ProdutoRepository;
+import java.util.Optional;
 
 /**
- *
  * @author nails
  */
 
 @RestController
 @RequestMapping("/produtos")
 public class ProdutoResource {
-	
-	//auterar para caminho absoluto real da maquina
-	private static String caminhoImagens = "C:/FACULDADE/SENAC_QUARTO SEMESTRE/PROJETO INTEGRADOR/DevsMaster-PI-4-Back-End/src/main/resources/static/";
-    
- 
-	@Autowired
-	private ProdutoRepository produtoRepository;
-		
-	//Cadastra produto
-	@PostMapping
-	public @ResponseBody Produto novoProduto(Produto produto, 
-		@RequestParam("file") MultipartFile arquivo) {
-		
-		produtoRepository.save(produto);	
-		
-		try {
-			if(!arquivo.isEmpty()) {
-				byte[] bytes = arquivo.getBytes();
-				Path caminho = Paths.get(caminhoImagens+String.valueOf(produto.getId()) + arquivo.getOriginalFilename());
-				Files.write(caminho, bytes);
-				produto.setFoto1(caminhoImagens+String.valueOf(produto.getId()) + arquivo.getOriginalFilename());
-				
-				produtoRepository.save(produto);
-			}
-		} catch (IOException e) {
-			
-		}
-			
-		return produto;
-	}
-	
-	
-	//Listar produtos
-	@GetMapping
-	public Iterable<Produto> obtProduto() {
-		return produtoRepository.findAll();
-	}
-	
-	//LIstar produto por nome
-	@GetMapping(path="/nome/{parteNome}")
-	public Iterable<Produto>obtProdutoPorNome(@PathVariable String parteNome){
-		return produtoRepository.findByNomeContaining(parteNome);
-	}
-	
-	
-	//Listar produtos por pagina
-	@GetMapping(path="/pagina/{numeroPagina}/{qtdePagina}")
-	public Iterable<Produto> obterProdutoPaginada(
-			@PathVariable int numeroPagina, @PathVariable int qtdePagina) {
-		if(qtdePagina >= 5) qtdePagina = 5;
-		Pageable page = PageRequest.of(numeroPagina, qtdePagina);
-		return produtoRepository.findAll(page);
-	}
-	
-	//Buscar produto por ID
-	@GetMapping(path="/{id}")
-	public Optional<Produto> obterProdutoPorId(@PathVariable int id) {
-		return produtoRepository.findById(id);
-		
-	}
-	
-	//Alterar produto
-	@PutMapping
-	public Produto alterarProduto(Produto produto) {
-		produtoRepository.save(produto);
-		return produto;
-	}
-	
-	//deletar protudo
-	@DeleteMapping(path = "/delete/{id}")
-	public void excluirProduto(@PathVariable int id) {
-		 produtoRepository.deleteById(id);
-	}
+
+    @Autowired
+    private ProdutoRepository produtoRepository;
+    @Autowired
+    private FileService fileService;
+
+    //Cadastra produto
+    @PostMapping("/create")
+    //ISSO AQUI NÃO PODE SER UM JSON, NÃO POSSO ENVIAR ARQUIVO E JSON NO MESMO ENDPOINT, ao inves do objeto produto deve ser os seus atributos e depois tratar isso
+    public ResponseEntity<String> NovoProduto(@RequestParam Produto produto, @RequestParam MultipartFile file) {
+        //produtoRepository.save(produto);
+        return fileService.saveFile(file);
+    }
+
+    @GetMapping("/file/download")
+    public ResponseEntity<?> downloadImage(@RequestParam String fileName, @RequestParam int id) {
+        return fileService.getFile(fileName, id);
+    }
+
+    //Listar produtos
+    @GetMapping("/list-all")
+    public Iterable<Produto> obtProduto() {
+        return produtoRepository.findAll();
+    }
+
+    //LIstar produto por nome
+    @GetMapping("/nome")
+    public Iterable<Produto> obtProdutoPorNome(@RequestParam String nome) {
+        return produtoRepository.findByNomeContaining(nome);
+    }
+
+
+    //Listar produtos por pagina
+    @GetMapping("/pagina")
+    public Iterable<Produto> obterProdutoPaginada(@RequestParam int numeroPagina,
+                                                  @RequestParam int qtdePagina) {
+        Pageable page = PageRequest.of(qtdePagina >= 5 ? 5 : qtdePagina, qtdePagina);
+        return produtoRepository.findAll(page);
+    }
+
+    //Buscar produto por ID
+    @GetMapping("/id")
+    public Optional<Produto> obterProdutoPorId(@RequestParam int id) {
+        return produtoRepository.findById(id);
+
+    }
+
+    //Alterar produto
+    @PutMapping("/update")                      //TODO ASSIM COMO O METODO DE INSERIR NÃO PODEMOS DEIXAR UM OBJETO AQUI, NÃO POSSO ENVIAR JSON E IMAGEM
+    public ResponseEntity<String> alterarProduto(Produto produto, @RequestParam String fileName,
+                                                 @RequestParam MultipartFile file,
+                                                 @RequestParam int id) {
+        produtoRepository.save(produto);
+        fileService.deleteDirectoryWithImages(id);
+        fileService.saveFile(file);
+        return ResponseEntity.ok().body("Update product ok");
+    }
+
+    //deletar protudo
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> excluirProduto(@RequestParam int id) {
+        produtoRepository.deleteById(id);
+        return ResponseEntity.ok().body("successfully deleted");
+    }
 
 
 }
