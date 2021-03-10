@@ -32,14 +32,20 @@ public class ProdutoResource {
 
     //Cadastra produto
     @PostMapping("/create")
-    //ISSO AQUI NÃO PODE SER UM JSON, NÃO POSSO ENVIAR ARQUIVO E JSON NO MESMO ENDPOINT, ao inves do objeto produto deve ser os seus atributos e depois tratar isso
-    public ResponseEntity<String> NovoProduto(@RequestParam Produto produto, @RequestParam MultipartFile file) {
-        //produtoRepository.save(produto);
+    public ResponseEntity<String> NovoProduto(@RequestBody Produto produto) {
+        produtoRepository.save(produto);
+        return ResponseEntity.ok().body("Produto salvo");
+    }
+
+    //Envia imagem
+    @PostMapping("/file/upload")
+    public ResponseEntity<String> uploadFile(@RequestParam MultipartFile file) {
         return fileService.saveFile(file);
     }
 
+    //Baixa a imagem
     @GetMapping("/file/download")
-    public ResponseEntity<?> downloadImage(@RequestParam String fileName, @RequestParam int id) {
+    public ResponseEntity<?> downloadImage(@RequestBody String fileName, @RequestBody int id) {
         return fileService.getFile(fileName, id);
     }
 
@@ -51,40 +57,42 @@ public class ProdutoResource {
 
     //LIstar produto por nome
     @GetMapping("/nome")
-    public Iterable<Produto> obtProdutoPorNome(@RequestParam String nome) {
+    public Iterable<Produto> obtProdutoPorNome(@RequestBody String nome) {
         return produtoRepository.findByNomeContaining(nome);
     }
 
-
     //Listar produtos por pagina
     @GetMapping("/pagina")
-    public Iterable<Produto> obterProdutoPaginada(@RequestParam int numeroPagina,
-                                                  @RequestParam int qtdePagina) {
+    public Iterable<Produto> obterProdutoPaginada(@RequestBody int numeroPagina,
+                                                  @RequestBody int qtdePagina) {
         Pageable page = PageRequest.of(qtdePagina >= 5 ? 5 : qtdePagina, qtdePagina);
         return produtoRepository.findAll(page);
     }
 
     //Buscar produto por ID
     @GetMapping("/id")
-    public Optional<Produto> obterProdutoPorId(@RequestParam int id) {
+    public Optional<Produto> obterProdutoPorId(@RequestBody int id) {
         return produtoRepository.findById(id);
 
     }
 
     //Alterar produto
-    @PutMapping("/update")                      //TODO ASSIM COMO O METODO DE INSERIR NÃO PODEMOS DEIXAR UM OBJETO AQUI, NÃO POSSO ENVIAR JSON E IMAGEM
-    public ResponseEntity<String> alterarProduto(Produto produto, @RequestParam String fileName,
-                                                 @RequestParam MultipartFile file,
-                                                 @RequestParam int id) {
+    @PutMapping("/update")
+    public ResponseEntity<String> alterarProduto(@RequestBody Produto produto) {
         produtoRepository.save(produto);
-        fileService.deleteDirectoryWithImages(id);
-        fileService.saveFile(file);
         return ResponseEntity.ok().body("Update product ok");
+    }
+
+    //Atualiza a imagem
+    @PutMapping("/update/file")
+    public ResponseEntity<String> updateFileProduct(@RequestBody int id) {
+        fileService.deleteDirectoryWithImages(id);
+        return ResponseEntity.ok().body("Produto alterado");
     }
 
     //deletar protudo
     @DeleteMapping("/delete")
-    public ResponseEntity<String> excluirProduto(@RequestParam int id) {
+    public ResponseEntity<String> excluirProduto(@RequestBody int id) {
         produtoRepository.deleteById(id);
         return ResponseEntity.ok().body("successfully deleted");
     }
